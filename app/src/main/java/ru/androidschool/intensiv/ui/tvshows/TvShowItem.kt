@@ -8,6 +8,7 @@ import ru.androidschool.intensiv.data.Movie
 import ru.androidschool.intensiv.data.TvShow
 import ru.androidschool.intensiv.databinding.ItemTvShowBinding
 import ru.androidschool.intensiv.databinding.ItemWithTextBinding
+import ru.androidschool.intensiv.utils.loadImage
 
 class TvShowItem(
     private val content: TvShow,
@@ -23,10 +24,7 @@ class TvShowItem(
             onClick.invoke(content)
         }
 
-
-        Picasso.get()
-            .load(content.image)
-            .into(view.imagePreview)
+        view.imagePreview.loadImage(content.image)
     }
 
     override fun initializeViewBinding(view: View) = ItemTvShowBinding.bind(view)

@@ -1,10 +1,15 @@
 package ru.androidschool.intensiv.data
 
-class TvShow(
-    var title: String? = "",
+data class TvShow(
+    var title: String = "",
     var voteAverage: Double = 0.0,
-    var image: String? = ""
+    var image: String = ""
 ) {
     val rating: Float
-        get() = voteAverage.div(2).toFloat()
+        get() = voteAverage.div(DIVIDER).toFloat()
+
+    companion object {
+        const val DIVIDER = 2
+    }
+
 }
