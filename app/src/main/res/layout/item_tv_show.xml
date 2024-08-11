@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/content"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/material_margin_super_small"
+    android:layout_marginLeft="@dimen/material_margin_super_small"
+    android:layout_marginEnd="@dimen/material_margin_super_small"
+    android:layout_marginBottom="@dimen/material_margin_normal"
+    tools:ignore="RtlHardcoded">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/image_preview"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/tv_show_card_height"
+        android:scaleType="centerCrop"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize10Percent"
+        app:strokeColor="@null"
+        android:background="@color/textColorLight"
+        tools:src="@drawable/ic_avatar" />
+
+    <TextView
+        android:id="@+id/description"
+        style="@style/text_description"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/image_preview"
+        tools:text="Spider man no way home"
+        tools:textColor="@color/textColorLight" />
+
+    <androidx.appcompat.widget.AppCompatRatingBar
+        android:id="@+id/movie_rating"
+        style="@style/Base.Widget.AppCompat.RatingBar.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:isIndicator="true"
+        android:numStars="5"
+        android:progressBackgroundTint="@color/colorControlNormal"
+        android:stepSize="0.5"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/image_preview"
+        tools:rating="5" />
+</androidx.constraintlayout.widget.ConstraintLayout>
