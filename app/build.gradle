@@ -86,4 +86,10 @@ dependencies {
     implementation "com.github.lisawray.groupie:groupie-viewbinding:$rootProject.groupieVersion"
 
     implementation "com.jakewharton.timber:timber:$rootProject.timberVersion"
+
+    //Retrofit
+    implementation "com.squareup.retrofit2:retrofit:$rootProject.retrofitVersion"
+    implementation "com.squareup.retrofit2:converter-gson:$rootProject.gsonVersion"
+    implementation "com.squareup.okhttp3:logging-interceptor:$rootProject.okHttpLoggingInterceptorVersion"
+    implementation "com.squareup.okhttp3:okhttp:$rootProject.okHttpVersion"
 }
