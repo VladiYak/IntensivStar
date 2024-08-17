@@ -12,9 +12,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.GroupieViewHolder
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import io.reactivex.Observable
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 import ru.androidschool.intensiv.R
 import ru.androidschool.intensiv.data.dto.MovieDto
 import ru.androidschool.intensiv.data.dto.Movies
@@ -23,11 +25,14 @@ import ru.androidschool.intensiv.databinding.FeedHeaderBinding
 import ru.androidschool.intensiv.network.MovieApiClient
 import ru.androidschool.intensiv.ui.afterTextChanged
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 
 class FeedFragment : Fragment(R.layout.feed_fragment) {
 
     private var _binding: FeedFragmentBinding? = null
     private var _searchBinding: FeedHeaderBinding? = null
+
+    private val disposables = CompositeDisposable()
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -60,13 +65,7 @@ class FeedFragment : Fragment(R.layout.feed_fragment) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
-        searchBinding.searchToolbar.binding.searchEditText.afterTextChanged {
-            Timber.d(it.toString())
-            if (it.toString().length > MIN_LENGTH) {
-                openSearch(it.toString())
-            }
-        }
+        searchMovie()
 
         binding.moviesRecyclerView.adapter = adapter
 
@@ -75,48 +74,70 @@ class FeedFragment : Fragment(R.layout.feed_fragment) {
         fetchNowPlayingMovies()
         fetchPopularMovies()
 
+    }
 
+    private fun searchMovie() {
+        val disposable = Observable.create<String> { emitter ->
+            searchBinding.searchToolbar.binding.searchEditText.afterTextChanged {
+                emitter.onNext("$it".trim())
+            }
+        }.debounce(500, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
+            .filter {
+                it.length > MIN_LENGTH
+            }
+            .subscribe {
+                openSearch(it)
+            }
+
+        disposables.add(disposable)
     }
 
     private fun fetchNowPlayingMovies() {
-        val getNowPlayingMovies = MovieApiClient.apiClient.getNowPlayingMovies()
-        loadAndShowMovies(getNowPlayingMovies, R.string.recommended)
+        val nowPlayingMovies = MovieApiClient.apiClient.getNowPlayingMovies()
+        loadAndShowMovies(nowPlayingMovies, R.string.recommended)
     }
 
     private fun fetchUpcomingMovies() {
-        val getUpcomingMovies = MovieApiClient.apiClient.getUpcomingMovies()
-        loadAndShowMovies(getUpcomingMovies, R.string.upcoming)
+        val upcomingMovies = MovieApiClient.apiClient.getUpcomingMovies()
+        loadAndShowMovies(upcomingMovies, R.string.upcoming)
     }
 
     private fun fetchPopularMovies() {
-        val getPopularMovies = MovieApiClient.apiClient.getPopularMovies()
-        loadAndShowMovies(getPopularMovies, R.string.popular)
+        val popularMovies = MovieApiClient.apiClient.getPopularMovies()
+        loadAndShowMovies(popularMovies, R.string.popular)
     }
 
-    private fun loadAndShowMovies(getMovies: Call<Movies>, @StringRes title: Int) {
-        getMovies.enqueue(object : Callback<Movies> {
-            override fun onResponse(call: Call<Movies>, response: Response<Movies>) {
-                response.body()?.results?.let { results ->
-                    val movies = listOf(
-                        MainCardContainer(
-                            title,
-                            results.map {
-                                MovieItem(it) { movie ->
-                                    openMovieDetails(movie)
-                                }
-                            }
-                        )
-                    )
-                    adapter.apply { addAll(movies) }
+    private fun loadAndShowMovies(movies: Single<Movies>, @StringRes title: Int) {
+        val disposable = movies
+            .subscribeOn(Schedulers.io())
+            .map {
+                mapToCardContainer(title, it.results)
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                adapter.apply {
+                    addAll(it)
                 }
-            }
+            }, { throwable ->
+                Timber.e(throwable)
+            })
 
-            override fun onFailure(call: Call<Movies>, t: Throwable) {
-                Timber.e(t)
-            }
-
-        })
+        disposables.add(disposable)
     }
+
+    private fun mapToCardContainer(
+        @StringRes title: Int,
+        movies: List<MovieDto>?
+    ): List<MainCardContainer> = listOf(
+        MainCardContainer(
+            title,
+            movies?.map {
+                MovieItem(it) { movie ->
+                    openMovieDetails(movie)
+                }
+            } ?: listOf()
+        )
+    )
 
     private fun openMovieDetails(movie: MovieDto) {
         val bundle = Bundle()
@@ -143,6 +164,7 @@ class FeedFragment : Fragment(R.layout.feed_fragment) {
         super.onDestroyView()
         _binding = null
         _searchBinding = null
+        disposables.clear()
     }
 
     companion object {

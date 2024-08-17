@@ -59,4 +59,7 @@ ext {
     okHttpLoggingInterceptorVersion = '4.10.0'
     gsonVersion = '2.9.0'
     okHttpVersion = '4.10.0'
+    rxJava2Version = '2.2.21'
+    rxAndroidVersion = '2.1.1'
+    rxAdapterVersion = '2.9.0'
 }

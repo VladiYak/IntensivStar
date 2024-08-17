@@ -1,5 +1,6 @@
 package ru.androidschool.intensiv.network
 
+import io.reactivex.Single
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Part
@@ -18,27 +19,33 @@ interface MovieApiInterface {
         get() = Locale.getDefault().toLanguageTag()
 
     @GET("movie/now_playing")
-    fun getNowPlayingMovies(@Query("language") language: String = defaultLanguage): Call<Movies>
+    fun getNowPlayingMovies(@Query("language") language: String = defaultLanguage): Single<Movies>
 
     @GET("movie/upcoming")
-    fun getUpcomingMovies(@Query("language") language: String = defaultLanguage): Call<Movies>
+    fun getUpcomingMovies(@Query("language") language: String = defaultLanguage): Single<Movies>
 
     @GET("movie/popular")
-    fun getPopularMovies(@Query("language") language: String = defaultLanguage): Call<Movies>
+    fun getPopularMovies(@Query("language") language: String = defaultLanguage): Single<Movies>
 
     @GET("tv/popular")
-    fun getPopularTvShows(@Query("language") language: String = defaultLanguage): Call<TvShows>
+    fun getPopularTvShows(@Query("language") language: String = defaultLanguage): Single<TvShows>
 
     @GET("movie/{id}")
     fun getMovieDetailsById(
         @Path("id") id: Int,
         @Query("language") language: String = defaultLanguage
-    ): Call<MovieDetails>
+    ): Single<MovieDetails>
 
     @GET("movie/{movie_id}/credits")
     fun getMovieActorsById(
         @Path("movie_id") movieId: Int,
         @Query("language") language: String = defaultLanguage
-    ): Call<Actors>
+    ): Single<Actors>
+
+    @GET("search/movie")
+    fun searchMovie(
+        @Query("language") language: String = defaultLanguage,
+        @Query("query") query: String
+    ): Single<Movies>
 
 }

@@ -7,6 +7,9 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.GroupieViewHolder
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -23,6 +26,8 @@ class MovieDetailsFragment : Fragment(R.layout.movie_details_fragment) {
 
     private var _binding: MovieDetailsFragmentBinding? = null
     private val binding get() = _binding!!
+
+    private val disposables = CompositeDisposable()
 
     private val adapter by lazy {
         GroupAdapter<GroupieViewHolder>()
@@ -51,46 +56,42 @@ class MovieDetailsFragment : Fragment(R.layout.movie_details_fragment) {
     }
 
     private fun fetchMovieActors(id: Int) {
-        val movieActors = MovieApiClient.apiClient.getMovieActorsById(id ?: 0)
-        movieActors.enqueue(object : Callback<Actors> {
-            override fun onResponse(call: Call<Actors>, response: Response<Actors>) {
-                response.body()?.cast?.let { actors ->
-                    val actorList = actors.map { ActorItem(it) }
-                    binding.actorsRecyclerView.adapter = adapter.apply { addAll(actorList) }
-                }
+        val disposable = MovieApiClient.apiClient.getMovieActorsById(id)
+            .subscribeOn(Schedulers.io())
+            .map { actors ->
+                actors.cast.map { ActorItem(it) }
             }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ actorList ->
+                binding.actorsRecyclerView.adapter = adapter.apply { addAll(actorList) }
+            }, { throwable ->
+                Timber.e(throwable)
+            })
 
-            override fun onFailure(call: Call<Actors>, t: Throwable) {
-                Timber.e(t)
-            }
-
-        })
+        disposables.add(disposable)
     }
 
     private fun fetchMovieDetails(id: Int) {
-        val movieDetails = MovieApiClient.apiClient.getMovieDetailsById(id)
-        movieDetails.enqueue(object : Callback<MovieDetails> {
-            override fun onResponse(call: Call<MovieDetails>, response: Response<MovieDetails>) {
-                response.body()?.let { movie ->
-                    with(binding) {
-                        movieTitle.text = movie.title
-                        movieRating.rating = movie.voteAverage?.toFloat() ?: 0.0f
-                        movieDescription.text = movie.overview
-                        movieStudio.text =
-                            movie.productionCompanies?.joinToString { it.name.toString() }
-                        movieGenre.text = movie.genres?.joinToString { it.id.toString() }
-                        movieYear.text = movie.releaseDate
+        val disposable = MovieApiClient.apiClient.getMovieDetailsById(id)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ movie ->
+                with(binding) {
+                    movieTitle.text = movie.title
+                    movieRating.rating = movie.voteAverage?.toFloat() ?: 0.0f
+                    movieDescription.text = movie.overview
+                    movieStudio.text =
+                        movie.productionCompanies?.joinToString { it.name.toString() }
+                    movieGenre.text = movie.genres?.joinToString { it.id.toString() }
+                    movieYear.text = movie.releaseDate
 
-                        movieImage.loadImage(movie.posterPath)
-                    }
+                    movieImage.loadImage(movie.posterPath)
                 }
-            }
+            }, { throwable ->
+                Timber.e(throwable)
+            })
 
-            override fun onFailure(call: Call<MovieDetails>, t: Throwable) {
-                Timber.e(t)
-            }
-
-        })
+        disposables.add(disposable)
     }
 
     private fun getMovieId() = requireArguments().getInt(FeedFragment.KEY_MOVIE_ID)

@@ -97,4 +97,10 @@ dependencies {
     implementation "com.squareup.retrofit2:converter-gson:$rootProject.gsonVersion"
     implementation "com.squareup.okhttp3:logging-interceptor:$rootProject.okHttpLoggingInterceptorVersion"
     implementation "com.squareup.okhttp3:okhttp:$rootProject.okHttpVersion"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$rootProject.rxAdapterVersion"
+
+    // RxJava2
+    implementation "io.reactivex.rxjava2:rxjava:$rootProject.rxJava2Version"
+
+    implementation "io.reactivex.rxjava2:rxandroid:$rootProject.rxAndroidVersion"
 }
