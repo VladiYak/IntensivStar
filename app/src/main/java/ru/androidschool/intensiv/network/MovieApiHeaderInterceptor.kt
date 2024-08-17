@@ -3,7 +3,7 @@ package ru.androidschool.intensiv.network
 import okhttp3.Interceptor
 import okhttp3.Response
 import ru.androidschool.intensiv.BuildConfig
-import ru.androidschool.intensiv.network.MovieApiClient.API_KEY_HEADER
+import ru.androidschool.intensiv.utils.API_KEY_HEADER
 
 class MovieApiHeaderInterceptor : Interceptor {
 

@@ -1,6 +1,7 @@
 package ru.androidschool.intensiv.data.dto
 
 import com.google.gson.annotations.SerializedName
+import ru.androidschool.intensiv.BuildConfig
 
 data class Cast(
     @SerializedName("id")
@@ -28,5 +29,5 @@ data class Cast(
 ) {
     @SerializedName("profile_path")
     var profilePath: String? = null
-        get() = "https://image.tmdb.org/t/p/w500$field"
+        get() = "${BuildConfig.IMAGE_URL}$field"
 }
