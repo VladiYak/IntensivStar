@@ -21,15 +21,32 @@
         <item name="cornerSize">10%</item>
     </style>
 
-    <style name="text_description">
+    <style name="text_title_tv_show">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">@color/textColorLight</item>
-        <item name="android:textSize">@dimen/tv_show_text_size</item>
+        <item name="android:textSize">@dimen/text_size_common</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">2</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:layout_marginTop">@dimen/material_margin_small</item>
-        <item name="android:layout_marginBottom">@dimen/material_margin_small</item>
     </style>
+
+    <style name="AppTheme.Title.TextAppearance" parent="android:TextAppearance">
+        <item name="android:textSize">30sp</item>
+        <item name="android:textColor">@color/textColorLight</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="AppTheme.Text.Gray.Normal" parent="android:TextAppearance">
+        <item name="android:textColor">@color/textColorGrey</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="AppTheme.Text.Light.Normal" parent="android:TextAppearance">
+        <item name="android:textColor">@color/textColorLight</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
 
 
 </resources>

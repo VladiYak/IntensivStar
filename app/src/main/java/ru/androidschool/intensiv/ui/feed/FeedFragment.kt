@@ -1,17 +1,26 @@
 package ru.androidschool.intensiv.ui.feed
 
 import android.os.Bundle
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.GroupieViewHolder
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import ru.androidschool.intensiv.R
-import ru.androidschool.intensiv.data.MockRepository
-import ru.androidschool.intensiv.data.Movie
+import ru.androidschool.intensiv.data.dto.MovieDto
+import ru.androidschool.intensiv.data.dto.Movies
 import ru.androidschool.intensiv.databinding.FeedFragmentBinding
 import ru.androidschool.intensiv.databinding.FeedHeaderBinding
+import ru.androidschool.intensiv.network.MovieApiClient
 import ru.androidschool.intensiv.ui.afterTextChanged
 import timber.log.Timber
 
@@ -59,24 +68,59 @@ class FeedFragment : Fragment(R.layout.feed_fragment) {
             }
         }
 
-        // Используя Мок-репозиторий получаем фэйковый список фильмов
-        val moviesList =
-                MockRepository.getMovies().map {
-                    MovieItem(it) { movie ->
-                        openMovieDetails(
-                            movie
-                        )
-                    }
-                }.toList()
+        binding.moviesRecyclerView.adapter = adapter
 
 
-        binding.moviesRecyclerView.adapter = adapter.apply { addAll(moviesList) }
+        fetchUpcomingMovies()
+        fetchNowPlayingMovies()
+        fetchPopularMovies()
+
 
     }
 
-    private fun openMovieDetails(movie: Movie) {
+    private fun fetchNowPlayingMovies() {
+        val getNowPlayingMovies = MovieApiClient.apiClient.getNowPlayingMovies()
+        loadAndShowMovies(getNowPlayingMovies, R.string.recommended)
+    }
+
+    private fun fetchUpcomingMovies() {
+        val getUpcomingMovies = MovieApiClient.apiClient.getUpcomingMovies()
+        loadAndShowMovies(getUpcomingMovies, R.string.upcoming)
+    }
+
+    private fun fetchPopularMovies() {
+        val getPopularMovies = MovieApiClient.apiClient.getPopularMovies()
+        loadAndShowMovies(getPopularMovies, R.string.popular)
+    }
+
+    private fun loadAndShowMovies(getMovies: Call<Movies>, @StringRes title: Int) {
+        getMovies.enqueue(object : Callback<Movies> {
+            override fun onResponse(call: Call<Movies>, response: Response<Movies>) {
+                response.body()?.results?.let { results ->
+                    val movies = listOf(
+                        MainCardContainer(
+                            title,
+                            results.map {
+                                MovieItem(it) { movie ->
+                                    openMovieDetails(movie)
+                                }
+                            }
+                        )
+                    )
+                    adapter.apply { addAll(movies) }
+                }
+            }
+
+            override fun onFailure(call: Call<Movies>, t: Throwable) {
+                Timber.e(t)
+            }
+
+        })
+    }
+
+    private fun openMovieDetails(movie: MovieDto) {
         val bundle = Bundle()
-        bundle.putString(KEY_TITLE, movie.title)
+        bundle.putInt(KEY_MOVIE_ID, movie.id)
         findNavController().navigate(R.id.movie_details_fragment, bundle, options)
     }
 
@@ -105,5 +149,6 @@ class FeedFragment : Fragment(R.layout.feed_fragment) {
         const val MIN_LENGTH = 3
         const val KEY_TITLE = "title"
         const val KEY_SEARCH = "search"
+        const val KEY_MOVIE_ID = "id"
     }
 }

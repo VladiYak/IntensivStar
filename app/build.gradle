@@ -21,14 +21,19 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField 'String', 'THE_MOVIE_DATABASE_API', keystoreProperties['THE_MOVIE_DATABASE_API']
+
     }
     buildTypes {
         debug {
             testCoverageEnabled true
+            buildConfigField 'String', 'BASE_URL', '"https://api.themoviedb.org/3/"'
+            buildConfigField 'String', 'IMAGE_URL', '"https://image.tmdb.org/t/p/w500"'
         }
         release {
             testCoverageEnabled true
             minifyEnabled false
+            buildConfigField 'String', 'BASE_URL', '"https://api.themoviedb.org/3/"'
+            buildConfigField 'String', 'IMAGE_URL', '"https://image.tmdb.org/t/p/w500"'
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -86,4 +91,10 @@ dependencies {
     implementation "com.github.lisawray.groupie:groupie-viewbinding:$rootProject.groupieVersion"
 
     implementation "com.jakewharton.timber:timber:$rootProject.timberVersion"
+
+    //Retrofit
+    implementation "com.squareup.retrofit2:retrofit:$rootProject.retrofitVersion"
+    implementation "com.squareup.retrofit2:converter-gson:$rootProject.gsonVersion"
+    implementation "com.squareup.okhttp3:logging-interceptor:$rootProject.okHttpLoggingInterceptorVersion"
+    implementation "com.squareup.okhttp3:okhttp:$rootProject.okHttpVersion"
 }
