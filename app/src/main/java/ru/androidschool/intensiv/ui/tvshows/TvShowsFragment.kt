@@ -24,6 +24,7 @@ import ru.androidschool.intensiv.network.MovieApiClient
 import ru.androidschool.intensiv.ui.feed.MainCardContainer
 import ru.androidschool.intensiv.ui.feed.MovieItem
 import ru.androidschool.intensiv.utils.applyIoMainSchedulers
+import ru.androidschool.intensiv.utils.withProgressBar
 import timber.log.Timber
 
 class TvShowsFragment : Fragment(R.layout.tv_shows_fragment) {
@@ -70,6 +71,7 @@ class TvShowsFragment : Fragment(R.layout.tv_shows_fragment) {
                 }
             }
             .applyIoMainSchedulers()
+            .withProgressBar(binding.progressBar.progressBar)
             .subscribe({ tvShows ->
                 adapter.apply {
                     addAll(tvShows ?: listOf())

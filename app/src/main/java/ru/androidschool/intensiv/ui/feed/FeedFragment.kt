@@ -26,6 +26,7 @@ import ru.androidschool.intensiv.network.MovieApiClient
 import ru.androidschool.intensiv.ui.BaseFragment
 import ru.androidschool.intensiv.ui.afterTextChanged
 import ru.androidschool.intensiv.utils.applyIoMainSchedulers
+import ru.androidschool.intensiv.utils.withProgressBar
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
@@ -69,10 +70,7 @@ class FeedFragment : BaseFragment() {
 
         binding.moviesRecyclerView.adapter = adapter
 
-
-        fetchUpcomingMovies()
-        fetchNowPlayingMovies()
-        fetchPopularMovies()
+        fetchMovies()
 
     }
 
@@ -85,31 +83,33 @@ class FeedFragment : BaseFragment() {
         compositeDisposable.add(disposable)
     }
 
-
-    private fun fetchNowPlayingMovies() {
+    private fun fetchMovies() {
         val nowPlayingMovies = MovieApiClient.apiClient.getNowPlayingMovies()
-        loadAndShowMovies(nowPlayingMovies, R.string.recommended)
-    }
-
-    private fun fetchUpcomingMovies() {
         val upcomingMovies = MovieApiClient.apiClient.getUpcomingMovies()
-        loadAndShowMovies(upcomingMovies, R.string.upcoming)
-    }
-
-    private fun fetchPopularMovies() {
         val popularMovies = MovieApiClient.apiClient.getPopularMovies()
-        loadAndShowMovies(popularMovies, R.string.popular)
-    }
-
-    private fun loadAndShowMovies(movies: Single<Movies>, @StringRes title: Int) {
-        val disposable = movies
-            .map {
-                mapToCardContainer(title, it.results)
-            }
+        val disposable = Single.zip(
+            nowPlayingMovies,
+            upcomingMovies,
+            popularMovies
+        ) { nowPlaying, upcoming, popular ->
+            listOf(
+                FeedItem(R.string.recommended, nowPlaying.results),
+                FeedItem(R.string.upcoming, upcoming.results),
+                FeedItem(R.string.popular, popular.results)
+            )
+        }
             .applyIoMainSchedulers()
+            .withProgressBar(binding.progressBar.progressBar)
+            .map {
+                it.map { feed ->
+                    mapToCardContainer(feed.title, feed.items)
+                }
+            }
             .subscribe({
-                adapter.apply {
-                    addAll(it)
+                it.map { movies ->
+                    adapter.apply {
+                        addAll(movies)
+                    }
                 }
             }, { throwable ->
                 Timber.e(throwable)
