@@ -8,6 +8,10 @@ import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.GroupieViewHolder
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -19,12 +23,15 @@ import ru.androidschool.intensiv.databinding.TvShowsFragmentBinding
 import ru.androidschool.intensiv.network.MovieApiClient
 import ru.androidschool.intensiv.ui.feed.MainCardContainer
 import ru.androidschool.intensiv.ui.feed.MovieItem
+import ru.androidschool.intensiv.utils.applyIoMainSchedulers
 import timber.log.Timber
 
 class TvShowsFragment : Fragment(R.layout.tv_shows_fragment) {
 
     private var _binding: TvShowsFragmentBinding? = null
     private val binding get() = _binding!!
+
+    val disposables = CompositeDisposable()
 
     private val adapter by lazy {
         GroupAdapter<GroupieViewHolder>()
@@ -50,30 +57,33 @@ class TvShowsFragment : Fragment(R.layout.tv_shows_fragment) {
 
     private fun fetchPopularTvShows() {
         val getPopularTvShows = MovieApiClient.apiClient.getPopularTvShows()
-        loadAndShowTvShows(getPopularTvShows, R.string.popular)
+        loadAndShowTvShows(getPopularTvShows)
     }
 
-    private fun loadAndShowTvShows(getTvShows: Call<TvShows>, @StringRes title: Int) {
-        getTvShows.enqueue(object : Callback<TvShows> {
-            override fun onResponse(call: Call<TvShows>, response: Response<TvShows>) {
-                response.body()?.results?.let { results ->
-                    val tvShows = results.map {
-                        TvShowItem(it) {
-                        }
+    private fun loadAndShowTvShows(getTvShows: Single<TvShows>) {
+        val disposable = getTvShows
+            .map { tvShows ->
+                tvShows.results?.map {
+                    TvShowItem(it) {
+
                     }
-                    adapter.apply { addAll(tvShows) }
                 }
             }
+            .applyIoMainSchedulers()
+            .subscribe({ tvShows ->
+                adapter.apply {
+                    addAll(tvShows ?: listOf())
+                }
+            }, { throwable ->
+                Timber.e(throwable)
+            })
 
-            override fun onFailure(call: Call<TvShows>, t: Throwable) {
-                Timber.e(t)
-            }
-
-        })
+        disposables.add(disposable)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        disposables.clear()
     }
 }
