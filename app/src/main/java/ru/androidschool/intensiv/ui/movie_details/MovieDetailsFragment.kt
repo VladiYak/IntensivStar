@@ -18,16 +18,16 @@ import ru.androidschool.intensiv.data.dto.Actors
 import ru.androidschool.intensiv.data.dto.MovieDetails
 import ru.androidschool.intensiv.databinding.MovieDetailsFragmentBinding
 import ru.androidschool.intensiv.network.MovieApiClient
+import ru.androidschool.intensiv.ui.BaseFragment
 import ru.androidschool.intensiv.ui.feed.FeedFragment
+import ru.androidschool.intensiv.utils.applyIoMainSchedulers
 import ru.androidschool.intensiv.utils.loadImage
 import timber.log.Timber
 
-class MovieDetailsFragment : Fragment(R.layout.movie_details_fragment) {
+class MovieDetailsFragment : BaseFragment() {
 
     private var _binding: MovieDetailsFragmentBinding? = null
     private val binding get() = _binding!!
-
-    private val disposables = CompositeDisposable()
 
     private val adapter by lazy {
         GroupAdapter<GroupieViewHolder>()
@@ -57,24 +57,22 @@ class MovieDetailsFragment : Fragment(R.layout.movie_details_fragment) {
 
     private fun fetchMovieActors(id: Int) {
         val disposable = MovieApiClient.apiClient.getMovieActorsById(id)
-            .subscribeOn(Schedulers.io())
             .map { actors ->
                 actors.cast.map { ActorItem(it) }
             }
-            .observeOn(AndroidSchedulers.mainThread())
+            .applyIoMainSchedulers()
             .subscribe({ actorList ->
                 binding.actorsRecyclerView.adapter = adapter.apply { addAll(actorList) }
             }, { throwable ->
                 Timber.e(throwable)
             })
 
-        disposables.add(disposable)
+        compositeDisposable.add(disposable)
     }
 
     private fun fetchMovieDetails(id: Int) {
         val disposable = MovieApiClient.apiClient.getMovieDetailsById(id)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
+            .applyIoMainSchedulers()
             .subscribe({ movie ->
                 with(binding) {
                     movieTitle.text = movie.title
@@ -91,7 +89,7 @@ class MovieDetailsFragment : Fragment(R.layout.movie_details_fragment) {
                 Timber.e(throwable)
             })
 
-        disposables.add(disposable)
+        compositeDisposable.add(disposable)
     }
 
     private fun getMovieId() = requireArguments().getInt(FeedFragment.KEY_MOVIE_ID)

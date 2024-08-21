@@ -23,6 +23,7 @@ import ru.androidschool.intensiv.databinding.TvShowsFragmentBinding
 import ru.androidschool.intensiv.network.MovieApiClient
 import ru.androidschool.intensiv.ui.feed.MainCardContainer
 import ru.androidschool.intensiv.ui.feed.MovieItem
+import ru.androidschool.intensiv.utils.applyIoMainSchedulers
 import timber.log.Timber
 
 class TvShowsFragment : Fragment(R.layout.tv_shows_fragment) {
@@ -61,7 +62,6 @@ class TvShowsFragment : Fragment(R.layout.tv_shows_fragment) {
 
     private fun loadAndShowTvShows(getTvShows: Single<TvShows>) {
         val disposable = getTvShows
-            .subscribeOn(Schedulers.io())
             .map { tvShows ->
                 tvShows.results?.map {
                     TvShowItem(it) {
@@ -69,7 +69,7 @@ class TvShowsFragment : Fragment(R.layout.tv_shows_fragment) {
                     }
                 }
             }
-            .observeOn(AndroidSchedulers.mainThread())
+            .applyIoMainSchedulers()
             .subscribe({ tvShows ->
                 adapter.apply {
                     addAll(tvShows ?: listOf())

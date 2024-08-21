@@ -23,16 +23,16 @@ import ru.androidschool.intensiv.data.dto.Movies
 import ru.androidschool.intensiv.databinding.FeedFragmentBinding
 import ru.androidschool.intensiv.databinding.FeedHeaderBinding
 import ru.androidschool.intensiv.network.MovieApiClient
+import ru.androidschool.intensiv.ui.BaseFragment
 import ru.androidschool.intensiv.ui.afterTextChanged
+import ru.androidschool.intensiv.utils.applyIoMainSchedulers
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
-class FeedFragment : Fragment(R.layout.feed_fragment) {
+class FeedFragment : BaseFragment() {
 
     private var _binding: FeedFragmentBinding? = null
     private var _searchBinding: FeedHeaderBinding? = null
-
-    private val disposables = CompositeDisposable()
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -77,20 +77,14 @@ class FeedFragment : Fragment(R.layout.feed_fragment) {
     }
 
     private fun searchMovie() {
-        val disposable = Observable.create<String> { emitter ->
-            searchBinding.searchToolbar.binding.searchEditText.afterTextChanged {
-                emitter.onNext("$it".trim())
-            }
-        }.debounce(500, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
-            .filter {
-                it.length > MIN_LENGTH
-            }
-            .subscribe {
+        val disposable = searchBinding.searchToolbar.observeFilteredSearchText()
+            .subscribe({
                 openSearch(it)
-            }
+            }, { error -> Timber.e(error) })
 
-        disposables.add(disposable)
+        compositeDisposable.add(disposable)
     }
+
 
     private fun fetchNowPlayingMovies() {
         val nowPlayingMovies = MovieApiClient.apiClient.getNowPlayingMovies()
@@ -109,11 +103,10 @@ class FeedFragment : Fragment(R.layout.feed_fragment) {
 
     private fun loadAndShowMovies(movies: Single<Movies>, @StringRes title: Int) {
         val disposable = movies
-            .subscribeOn(Schedulers.io())
             .map {
                 mapToCardContainer(title, it.results)
             }
-            .observeOn(AndroidSchedulers.mainThread())
+            .applyIoMainSchedulers()
             .subscribe({
                 adapter.apply {
                     addAll(it)
@@ -122,7 +115,7 @@ class FeedFragment : Fragment(R.layout.feed_fragment) {
                 Timber.e(throwable)
             })
 
-        disposables.add(disposable)
+        compositeDisposable.add(disposable)
     }
 
     private fun mapToCardContainer(
@@ -164,7 +157,6 @@ class FeedFragment : Fragment(R.layout.feed_fragment) {
         super.onDestroyView()
         _binding = null
         _searchBinding = null
-        disposables.clear()
     }
 
     companion object {
