@@ -17,6 +17,7 @@ import ru.androidschool.intensiv.network.MovieApiClient
 import ru.androidschool.intensiv.ui.feed.FeedFragment.Companion.KEY_SEARCH
 import ru.androidschool.intensiv.ui.feed.MovieItem
 import ru.androidschool.intensiv.utils.applyIoMainSchedulers
+import ru.androidschool.intensiv.utils.withProgressBar
 import timber.log.Timber
 
 class SearchFragment : Fragment(R.layout.fragment_search) {
@@ -66,6 +67,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 }
             }
             .applyIoMainSchedulers()
+            .withProgressBar(binding.progressBar.progressBar)
             .subscribe({ movies ->
                 adapter.apply {
                     addAll(movies ?: listOf())

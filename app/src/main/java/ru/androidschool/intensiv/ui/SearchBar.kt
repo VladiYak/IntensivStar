@@ -9,6 +9,7 @@ import androidx.core.view.isVisible
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.PublishSubject
 import ru.androidschool.intensiv.R
 import ru.androidschool.intensiv.databinding.SearchToolbarBinding
 import ru.androidschool.intensiv.ui.feed.FeedFragment.Companion.MIN_LENGTH
@@ -66,7 +67,7 @@ class SearchBar @JvmOverloads constructor(
     }
 
     fun observeFilteredSearchText(): Observable<String> {
-        return Observable.create { emitter ->
+        return PublishSubject.create { emitter ->
             binding.searchEditText.afterTextChanged { text ->
                 if (!emitter.isDisposed) {
                     emitter.onNext(text.toString())
