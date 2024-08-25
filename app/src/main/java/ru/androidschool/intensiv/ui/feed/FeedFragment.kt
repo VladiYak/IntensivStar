@@ -25,6 +25,7 @@ import ru.androidschool.intensiv.databinding.FeedHeaderBinding
 import ru.androidschool.intensiv.network.MovieApiClient
 import ru.androidschool.intensiv.ui.BaseFragment
 import ru.androidschool.intensiv.ui.afterTextChanged
+import ru.androidschool.intensiv.utils.MovieType
 import ru.androidschool.intensiv.utils.applyIoMainSchedulers
 import ru.androidschool.intensiv.utils.withProgressBar
 import timber.log.Timber
@@ -92,30 +93,41 @@ class FeedFragment : BaseFragment() {
             upcomingMovies,
             popularMovies
         ) { nowPlaying, upcoming, popular ->
-            listOf(
-                FeedItem(R.string.recommended, nowPlaying.results),
-                FeedItem(R.string.upcoming, upcoming.results),
-                FeedItem(R.string.popular, popular.results)
+            mapOf(
+                MovieType.NOW_PLAYING to nowPlaying,
+                MovieType.UPCOMING to upcoming,
+                MovieType.POPULAR to popular
             )
         }
             .applyIoMainSchedulers()
             .withProgressBar(binding.progressBar.progressBar)
-            .map {
-                it.map { feed ->
-                    mapToCardContainer(feed.title, feed.items)
+            .subscribe({ moviesMap ->
+                moviesMap.forEach { (movieType, movies) ->
+                    updateMovieCardList(movies, movieType)
                 }
-            }
-            .subscribe({
-                it.map { movies ->
-                    adapter.apply {
-                        addAll(movies)
-                    }
-                }
+
             }, { throwable ->
                 Timber.e(throwable)
             })
 
         compositeDisposable.add(disposable)
+    }
+
+    private fun updateMovieCardList(movies: Movies, movieType: MovieType) {
+        val movieItems = movies.results?.map { movie ->
+            MovieItem(movie) {
+                openMovieDetails(it)
+            }
+        }
+        val mainCardContainer = MainCardContainer(
+            title = when (movieType) {
+                MovieType.NOW_PLAYING -> R.string.recommended
+                MovieType.UPCOMING -> R.string.upcoming
+                MovieType.POPULAR -> R.string.popular
+            },
+            items = movieItems ?: listOf()
+        )
+        adapter.add(mainCardContainer)
     }
 
     private fun mapToCardContainer(
