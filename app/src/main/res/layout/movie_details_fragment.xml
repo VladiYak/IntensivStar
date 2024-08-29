@@ -56,6 +56,7 @@
         android:overScrollMode="never"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -76,6 +77,7 @@
                 android:orientation="vertical"
                 app:layout_constraintGuide_end="@dimen/material_margin_small" />
 
+
             <TextView
                 android:id="@+id/movie_title"
                 style="@style/AppTheme.Title.TextAppearance"
@@ -85,12 +87,12 @@
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="Aquaman" />
 
-            <CheckBox
+            <ImageView
                 android:id="@+id/movie_favor"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@color/blueDark"
-                android:button="@drawable/ic_like"
+                android:src="@drawable/ic_like"
                 app:layout_constraintBottom_toBottomOf="@id/movie_title"
                 app:layout_constraintEnd_toEndOf="@id/content_end"
                 app:layout_constraintTop_toTopOf="@id/movie_title"
@@ -132,6 +134,18 @@
                 app:layout_constraintStart_toStartOf="@id/content_start"
                 app:layout_constraintTop_toBottomOf="@+id/watch_movie_button"
                 tools:text="" />
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
+
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/actors_recycler_view"
@@ -212,6 +226,8 @@
                 android:layout_height="0dp"
                 android:orientation="vertical"
                 app:layout_constraintGuide_end="321dp" />
+
+
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.imageview.ShapeableImageView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:orientation="vertical"
+tools:background="@color/blueDark">
+
+<com.google.android.material.imageview.ShapeableImageView
     android:id="@+id/image_preview"
     android:layout_width="@dimen/image_preview_width"
     android:layout_height="@dimen/image_preview_height"
@@ -9,3 +15,14 @@
     tools:src="@drawable/ic_avatar"
     android:scaleType="centerCrop"
     app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize10Percent" />
+
+<TextView
+    android:id="@+id/text_preview_name"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fontFamily="sans-serif-black"
+    android:gravity="center"
+    android:maxLines="2"
+    tools:text="Название фильма"
+    android:textColor="@color/white" />
+</LinearLayout>

@@ -5,7 +5,7 @@ import ru.androidschool.intensiv.BuildConfig
 
 data class MovieDetails(
     @SerializedName("id")
-    val id: Int?,
+    val id: Int,
     @SerializedName("imdb_id")
     val imdbId: String?,
     @SerializedName(value = "title")

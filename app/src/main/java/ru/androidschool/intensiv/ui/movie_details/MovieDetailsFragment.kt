@@ -4,24 +4,26 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.GroupieViewHolder
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import io.reactivex.Completable
 import ru.androidschool.intensiv.R
-import ru.androidschool.intensiv.data.dto.Actors
-import ru.androidschool.intensiv.data.dto.MovieDetails
 import ru.androidschool.intensiv.databinding.MovieDetailsFragmentBinding
+import ru.androidschool.intensiv.local.MovieActorJoin
+import ru.androidschool.intensiv.local.MoviesDatabase
+import ru.androidschool.intensiv.local.dao.ActorDao
+import ru.androidschool.intensiv.local.dao.MovieDao
+import ru.androidschool.intensiv.local.dao.MovieWithActorsDao
+import ru.androidschool.intensiv.local.entities.ActorEntity
+import ru.androidschool.intensiv.local.entities.MovieEntity
 import ru.androidschool.intensiv.network.MovieApiClient
 import ru.androidschool.intensiv.ui.BaseFragment
 import ru.androidschool.intensiv.ui.feed.FeedFragment
 import ru.androidschool.intensiv.utils.applyIoMainSchedulers
 import ru.androidschool.intensiv.utils.loadImage
+import ru.androidschool.intensiv.utils.setDebouncedClickListener
+import ru.androidschool.intensiv.utils.toActorEntityList
+import ru.androidschool.intensiv.utils.toEntity
 import timber.log.Timber
 
 class MovieDetailsFragment : BaseFragment() {
@@ -31,6 +33,25 @@ class MovieDetailsFragment : BaseFragment() {
 
     private val adapter by lazy {
         GroupAdapter<GroupieViewHolder>()
+    }
+
+    private lateinit var moviesDb: MoviesDatabase
+    private lateinit var movieDao: MovieDao
+    private lateinit var actorDao: ActorDao
+    private lateinit var movieWithActorsDao: MovieWithActorsDao
+
+    private var isSelectedMovie = false
+
+    private lateinit var currentDetailsForDb: MovieEntity
+    private lateinit var currentActors: List<ActorEntity>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        moviesDb = MoviesDatabase.getDatabase(requireContext())
+        movieDao = moviesDb.movieDao()
+        actorDao = moviesDb.actorDao()
+        movieWithActorsDao = moviesDb.movieWithActorsDao()
     }
 
     override fun onCreateView(
@@ -53,11 +74,19 @@ class MovieDetailsFragment : BaseFragment() {
         fetchMovieDetails(id)
 
         fetchMovieActors(id)
+
+        checkSelectedMovies(id)
+
+
+        binding.movieFavor.setDebouncedClickListener {
+            changeSelectedState()
+        }
     }
 
     private fun fetchMovieActors(id: Int) {
-        val disposable = MovieApiClient.apiClient.getMovieActorsById(id)
+        MovieApiClient.apiClient.getMovieActorsById(id)
             .map { actors ->
+                currentActors = actors.cast.toActorEntityList()
                 actors.cast.map { ActorItem(it) }
             }
             .applyIoMainSchedulers()
@@ -65,15 +94,17 @@ class MovieDetailsFragment : BaseFragment() {
                 binding.actorsRecyclerView.adapter = adapter.apply { addAll(actorList) }
             }, { throwable ->
                 Timber.e(throwable)
-            })
+            }).let {
+                compositeDisposable.add(it)
+            }
 
-        compositeDisposable.add(disposable)
     }
 
     private fun fetchMovieDetails(id: Int) {
-        val disposable = MovieApiClient.apiClient.getMovieDetailsById(id)
+        MovieApiClient.apiClient.getMovieDetailsById(id)
             .applyIoMainSchedulers()
             .subscribe({ movie ->
+                currentDetailsForDb = movie.toEntity()
                 with(binding) {
                     movieTitle.text = movie.title
                     movieRating.rating = movie.voteAverage?.toFloat() ?: 0.0f
@@ -87,9 +118,85 @@ class MovieDetailsFragment : BaseFragment() {
                 }
             }, { throwable ->
                 Timber.e(throwable)
-            })
+            }).let {
+                compositeDisposable.add(it)
+            }
+    }
 
-        compositeDisposable.add(disposable)
+    private fun saveToDb(
+        currentDetailsForDb: MovieEntity,
+        currentActors: List<ActorEntity>
+    ): Completable {
+        val resultOne = movieDao.saveMovie(currentDetailsForDb)
+        val resultTwo = actorDao.saveActors(currentActors)
+        val resultThree = currentActors.map { actorEntity ->
+            MovieActorJoin(
+                movieId = currentDetailsForDb.movieId,
+                actorId = actorEntity.actorId
+            )
+        }.let {
+            movieWithActorsDao.saveJoins(it)
+        }
+        return resultOne.andThen(resultTwo).andThen(resultThree)
+    }
+
+    private fun changeSelectedState() {
+        if (!isSelectedMovie) {
+            if (::currentDetailsForDb.isInitialized && this::currentActors.isInitialized) {
+                saveToDb(currentDetailsForDb, currentActors)
+                    .applyIoMainSchedulers()
+                    .doOnSubscribe {
+                        binding.progressBar.visibility = View.VISIBLE
+                    }
+                    .doFinally {
+                        binding.progressBar.visibility = View.GONE
+                    }
+                    .subscribe({
+                        setNewIconSelectedState(!isSelectedMovie)
+                    }, { throwable ->
+                        Timber.e(throwable)
+                    }).let {
+                        compositeDisposable.addAll(it)
+                    }
+
+            }
+        } else {
+            movieDao.deleteMovieById(currentDetailsForDb.movieId)
+                .applyIoMainSchedulers()
+                .subscribe({
+                    setNewIconSelectedState(!isSelectedMovie)
+                }, { throwable ->
+                    Timber.e(throwable)
+                }).let {
+                    compositeDisposable.addAll(it)
+                }
+        }
+    }
+
+
+    private fun setNewIconSelectedState(isSelected: Boolean) {
+        isSelectedMovie = isSelected
+        val drawableRes = if (isSelected) {
+            R.drawable.ic_like_filled
+        } else {
+            R.drawable.ic_like
+        }
+        binding.movieFavor.setImageResource(drawableRes)
+    }
+
+    private fun checkSelectedMovies(movieId: Int) {
+        movieDao.isExist(movieId)
+            .applyIoMainSchedulers()
+            .subscribe(
+                { result ->
+                    setNewIconSelectedState(result)
+                },
+                { throwable ->
+                    Timber.e(throwable, "Error checking if movie exists")
+                }
+            ).let {
+                compositeDisposable.add(it)
+            }
     }
 
     private fun getMovieId() = requireArguments().getInt(FeedFragment.KEY_MOVIE_ID)
