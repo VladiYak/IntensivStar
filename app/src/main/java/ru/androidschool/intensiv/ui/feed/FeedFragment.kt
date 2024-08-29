@@ -76,19 +76,20 @@ class FeedFragment : BaseFragment() {
     }
 
     private fun searchMovie() {
-        val disposable = searchBinding.searchToolbar.observeFilteredSearchText()
+        searchBinding.searchToolbar.observeFilteredSearchText()
             .subscribe({
                 openSearch(it)
             }, { error -> Timber.e(error) })
-
-        compositeDisposable.add(disposable)
+            .let {
+                compositeDisposable.add(it)
+            }
     }
 
     private fun fetchMovies() {
         val nowPlayingMovies = MovieApiClient.apiClient.getNowPlayingMovies()
         val upcomingMovies = MovieApiClient.apiClient.getUpcomingMovies()
         val popularMovies = MovieApiClient.apiClient.getPopularMovies()
-        val disposable = Single.zip(
+        Single.zip(
             nowPlayingMovies,
             upcomingMovies,
             popularMovies
@@ -108,9 +109,11 @@ class FeedFragment : BaseFragment() {
 
             }, { throwable ->
                 Timber.e(throwable)
-            })
+            }).let {
+                compositeDisposable.add(it)
+            }
 
-        compositeDisposable.add(disposable)
+
     }
 
     private fun updateMovieCardList(movies: Movies, movieType: MovieType) {
@@ -129,20 +132,6 @@ class FeedFragment : BaseFragment() {
         )
         adapter.add(mainCardContainer)
     }
-
-    private fun mapToCardContainer(
-        @StringRes title: Int,
-        movies: List<MovieDto>?
-    ): List<MainCardContainer> = listOf(
-        MainCardContainer(
-            title,
-            movies?.map {
-                MovieItem(it) { movie ->
-                    openMovieDetails(movie)
-                }
-            } ?: listOf()
-        )
-    )
 
     private fun openMovieDetails(movie: MovieDto) {
         val bundle = Bundle()

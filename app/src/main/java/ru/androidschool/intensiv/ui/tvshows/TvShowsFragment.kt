@@ -62,7 +62,7 @@ class TvShowsFragment : Fragment(R.layout.tv_shows_fragment) {
     }
 
     private fun loadAndShowTvShows(getTvShows: Single<TvShows>) {
-        val disposable = getTvShows
+        getTvShows
             .map { tvShows ->
                 tvShows.results?.map {
                     TvShowItem(it) {
@@ -78,9 +78,9 @@ class TvShowsFragment : Fragment(R.layout.tv_shows_fragment) {
                 }
             }, { throwable ->
                 Timber.e(throwable)
-            })
-
-        disposables.add(disposable)
+            }).let {
+                disposables.add(it)
+            }
     }
 
     override fun onDestroyView() {

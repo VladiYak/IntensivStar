@@ -56,7 +56,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
 
     private fun searchMovie(searchTerm: String?) {
         binding.moviesRecyclerView.adapter = adapter
-        val disposable = MovieApiClient.apiClient.searchMovie(
+        MovieApiClient.apiClient.searchMovie(
             query = searchTerm ?: ""
         )
             .map { response ->
@@ -74,8 +74,9 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 }
             }, { throwable ->
                 Timber.e(throwable)
-            })
-        disposables.add(disposable)
+            }).let {
+                disposables.add(it)
+            }
     }
 
     override fun onDestroyView() {
