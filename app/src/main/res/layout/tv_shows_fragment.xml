@@ -19,7 +19,7 @@
         android:paddingTop="@dimen/material_margin_large"
         android:scrollbars="vertical"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        tools:context="ru.androidschool.intensiv.ui.tvshows.TvShowsFragment"
+        tools:context="ru.androidschool.intensiv.presentation.tvshows.TvShowsFragment"
         tools:listitem="@layout/item_tv_show" />
 
 

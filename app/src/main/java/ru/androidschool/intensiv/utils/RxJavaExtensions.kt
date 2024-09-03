@@ -2,6 +2,7 @@ package ru.androidschool.intensiv.utils
 
 import android.view.View
 import android.widget.ProgressBar
+import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Scheduler
 import io.reactivex.Single
@@ -22,7 +23,21 @@ fun <T> Observable<T>.applyIoMainSchedulers(): Observable<T> {
         .observeOn(AndroidSchedulers.mainThread())
 }
 
+fun Completable.applyIoMainSchedulers(): Completable {
+    return this
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
+}
+
 fun <T> Single<T>.withProgressBar(progressBar: ProgressBar): Single<T> {
+    return this.doOnSubscribe {
+        progressBar.visibility = View.VISIBLE
+    }.doFinally {
+        progressBar.visibility = View.GONE
+    }
+}
+
+fun <T> Observable<T>.withProgressBar(progressBar: ProgressBar): Observable<T> {
     return this.doOnSubscribe {
         progressBar.visibility = View.VISIBLE
     }.doFinally {
