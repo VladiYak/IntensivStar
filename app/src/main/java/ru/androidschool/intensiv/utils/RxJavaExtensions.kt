@@ -36,3 +36,11 @@ fun <T> Single<T>.withProgressBar(progressBar: ProgressBar): Single<T> {
         progressBar.visibility = View.GONE
     }
 }
+
+fun <T> Observable<T>.withProgressBar(progressBar: ProgressBar): Observable<T> {
+    return this.doOnSubscribe {
+        progressBar.visibility = View.VISIBLE
+    }.doFinally {
+        progressBar.visibility = View.GONE
+    }
+}

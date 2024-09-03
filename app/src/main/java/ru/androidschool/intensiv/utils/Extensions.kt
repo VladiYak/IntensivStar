@@ -4,11 +4,10 @@ import android.os.SystemClock
 import android.view.View
 import android.widget.ImageView
 import com.squareup.picasso.Picasso
-import ru.androidschool.intensiv.BuildConfig
-import ru.androidschool.intensiv.data.dto.Cast
-import ru.androidschool.intensiv.data.dto.MovieDetails
-import ru.androidschool.intensiv.local.entities.ActorEntity
-import ru.androidschool.intensiv.local.entities.MovieEntity
+import ru.androidschool.intensiv.data.network.dto.Cast
+import ru.androidschool.intensiv.data.network.dto.MovieDetails
+import ru.androidschool.intensiv.data.local.entities.ActorDbEntity
+import ru.androidschool.intensiv.data.local.entities.MovieDbEntity
 
 fun ImageView.loadImage(imageUrl: String?) {
     Picasso.get()
@@ -31,8 +30,8 @@ fun View.setDebouncedClickListener(
     }
 }
 
-fun MovieDetails.toEntity(): MovieEntity {
-    return MovieEntity(
+fun MovieDetails.toEntity(): MovieDbEntity {
+    return MovieDbEntity(
         movieId = this.id,
         title = this.originalTitle,
         rating = this.voteAverage?.toFloat(),
@@ -44,9 +43,9 @@ fun MovieDetails.toEntity(): MovieEntity {
     )
 }
 
-fun List<Cast>.toActorEntityList(): List<ActorEntity> {
+fun List<Cast>.toActorEntityList(): List<ActorDbEntity> {
     return this.map { cast ->
-        ActorEntity(
+        ActorDbEntity(
             actorId = cast.id ?: 0,
             imageUrl = cast.profilePath ?: "",
             fullName = cast.originalName ?: ""
